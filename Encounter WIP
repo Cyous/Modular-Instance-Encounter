@@ -1,0 +1,107 @@
+--[[
+
+Sludge Monstrosity
+
+Author: Cyous
+Date: May 17, 2015
+
+]]
+
+local mod = getfenv(1)
+assert(type(mod) == "table","Critical Error, Burning Legion Citadel module missing!")
+module(mod._NAME..".SludgeMonstrosity",package.seeall)
+local self = getfenv(1)
+
+-- UNITS IN THIS SCRIPT (5):
+local BossID	= 0
+local BeastID	= 0
+local GrimeID	= 0
+local FinkleID	= 0
+local FogID		= 0
+local CrystalID	= 0
+
+-- SPELLS IN THIS SCRIPT
+local Toxic_Sludge			= 0
+local Thick_Slime			= 0
+local Foul_Fog				= 0
+local Grime					= 0
+local Crystal				= 0
+local Crackle				= 0
+local Heavy_Steps			= 0
+local Wave_of_Blight		= 0 
+local Aura_of_Pestilence	= 0
+
+function RegisterEncounterUnits(unit,event)
+	local InstanceId = unit:GetInstanceId()
+	if (self[InstanceId] == nil) then
+		self[InstanceId] = {}
+	end
+	for k,v in pairs self[InstanceId] do
+		if unit == nil then 
+			table.insert(self[InstanceID], unit)
+		end
+	end
+end
+
+function DespawnEncounterUnits(InstanceId)
+	for _,v in pairs self[InstanceId] do
+		v:Despawn(0,0)
+		v = nil
+	end
+end
+
+RegisterUnitEvent(BossID,18,"RegisterEncounterUnits")
+RegisterUnitEvent(BeastID,18,"RegisterEncounterUnits")
+RegisterUnitEvent(GrimeID,18,"RegisterEncounterUnits")
+RegisterUnitEvent(FinkleID,18,"RegisterEncounterUnits")
+RegisterUnitEvent(FogID,18,"RegisterEncounterUnits")
+RegisterUnitEvent(CrystalID,2,"RegisterEncounterUnits")
+
+function BOSS_OnLoad(unit,event)
+	unit:CastSpellOnTarget(Aura_of_Pestilence,unit)
+	unit:SetUInt32Value(58, 2) -- Unit unattackable
+	local Crystal = PerformIngameSpawn(2, CrystalID, unit:GetMapId(), unit:GetX(), unit:GetY(), unit:GetZ(), unit:GetO(), 1, 0)
+end
+
+function CrystalActive(go,event,player)
+	local Boss = go:GetInstanceCreature(go,GetMapId(), go:GetInstanceId(), BossID)
+	local Finkle = go:GetInstanceCreature(go,GetMapId(), go:GetInstanceId(), FinkleID)
+	if Boss ~= nil and Finkle ~= nil then
+		for _,v in pairs self[InstanceId] do
+			if v == go then
+				v = nil
+			end
+		end
+		go:RemoveFromWorld()
+		player:CastSpell(Crystal)	
+		EncounterHandler(Boss)
+	else 
+		error("Function 'CrystalActive' returning error: Boss or Finkle not found. InstanceId: "..go:GetInstanceId())
+	end
+end
+
+function EncounterHandler(Boss)
+	Boss:SetUInt32Value(58, 0) -- Unit attackable; boss encounter enabled
+end
+
+function EnterCombat(unit,event,attacker)
+        unit:RegisterEvent(BossHandler,1000,0)
+end
+
+function LeaveCombat(unit,event,lastTarget)
+	local InstanceId = unit:GetInstanceId()
+	DespawnEncounterUnits(InstanceId)
+	unit:RemoveEvents()
+end
+
+function TargetKilled(unit,event,victim)
+end
+
+function UnitDeath(unit,event,lastTarget)
+	local InstanceId = unit:GetInstanceId()
+	DespawnEncounterUnits(InstanceId)
+	unit:RemoveEvents()
+end
+
+function BossHandler(unit,phase)
+end
