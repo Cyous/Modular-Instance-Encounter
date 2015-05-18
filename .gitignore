@@ -1,41 +1,51 @@
-# Compiled Lua sources
-luac.out
 
-# luarocks build files
-*.src.rock
-*.zip
-*.tar.gz
+-- Script #1 :: Creating the instance module.
+module(INSTANCE_BURNING_LEGION_CITADEL, package.seeall)
 
-# Object files
-*.o
-*.os
-*.ko
-*.obj
-*.elf
 
-# Precompiled Headers
-*.gch
-*.pch
+--[[ 
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-*.def
-*.exp
+  SCRIPT BREAK (compiled so there's 1 less link). 
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+]]
 
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+-- Script #2 :: Create BLC tables for instance module
 
+local mod = require("INSTANCE_BURNING_LEGION_CITADEL")
+assert(type(mod) == "table","Missing Burning Legion Citadel module! Further script loading terminated.")
+module(mod._NAME..".BLC",package.seeall)
+mod = getfenv(1)
+local info = debug.getinfo(1)
+local src = string.reverse(info.short_src)
+local file_sep;
+if(GetPlatform() == "Win32") then
+        file_sep = "\\"
+else
+        file_sep = '/'
+end
+
+local startpos,endpos = string.find(src,file_sep),string.len(src)
+local directory = string.reverse(string.sub(src,startpos,endpos))
+print("Resolved directory is :"..directory)
+
+local modules = {
+
+	directory.."INSTANCE_BLC_Handler.lua",
+	directory.."SludgeMonstrosity.lua"
+	
+	}
+
+for _,v in pairs(modules) do
+        local loader_function,errormsg= loadfile(v)
+        if(loader_function == nil) then
+                print(errormsg)
+        else
+                setfenv(loader_function,mod)
+                local ret,errormsg = pcall(loader_function)
+                if(ret == false) then
+                        print(errormsg)
+                else
+                        print(string.format("Successfully loaded Lua file: \"%s\"",v))
+                end
+        end
+end
