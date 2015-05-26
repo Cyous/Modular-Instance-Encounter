@@ -30,6 +30,7 @@ local Crackle				= 0
 local Heavy_Steps			= 0
 local Wave_of_Blight		= 0 
 local Aura_of_Pestilence	= 0
+local Fixate
 
 function RegisterEncounterUnits(unit,event)
 	local InstanceId = unit:GetInstanceId()
@@ -50,6 +51,14 @@ function DespawnEncounterUnits(InstanceId)
 	end
 end
 
+function RemoveCrystal(unit,InstanceId)
+	for _,v in pairs(self[InstanceId].unit:GetInRangePlayers()) do
+		if v:HasAura(Crystal) then
+			v:RemoveAura(Crystal)
+		end
+	end
+end
+
 RegisterUnitEvent(BossID,18,"RegisterEncounterUnits")
 RegisterUnitEvent(BeastID,18,"RegisterEncounterUnits")
 RegisterUnitEvent(GrimeID,18,"RegisterEncounterUnits")
@@ -64,8 +73,8 @@ function BOSS_OnLoad(unit,event)
 end
 
 function CrystalActive(go,event,player)
-	local Boss = go:GetInstanceCreature(go,GetMapId(), go:GetInstanceId(), BossID)
-	local Finkle = go:GetInstanceCreature(go,GetMapId(), go:GetInstanceId(), FinkleID)
+	local Boss = go:GetInstanceCreature(go:GetMapId(), go:GetInstanceId(), BossID)
+	local Finkle = go:GetInstanceCreature(go:GetMapId(), go:GetInstanceId(), FinkleID)
 	if Boss ~= nil and Finkle ~= nil then
 		for _,v in pairs self[InstanceId] do
 			if v == go then
@@ -85,23 +94,82 @@ function EncounterHandler(Boss)
 end
 
 function EnterCombat(unit,event,attacker)
-        unit:RegisterEvent(BossHandler,1000,0)
+	unit:RegisterEvent("BOSS_START", 1000,1)
 end
 
 function LeaveCombat(unit,event,lastTarget)
 	local InstanceId = unit:GetInstanceId()
 	DespawnEncounterUnits(InstanceId)
+	RemoveCrystal(unit, InstanceId)
 	unit:RemoveEvents()
 end
 
 function TargetKilled(unit,event,victim)
+	for _,v in pairs(self[instanceId]) do
+		if v:GetEntry() == FinkleID then
+			if victim:HasAura(Crystal) then
+				v:SendChatMessage(14,0,"Oh, "..v:GetName()..", you better not be dead!")
+			else
+				v:SendChatMessage(14,0,"You've got to be better than that!")
+			end
+		else
+			victim:PlayerSendChatMessage(11,0, victim:GetName().." has died.")
+		end
+	end
 end
 
 function UnitDeath(unit,event,lastTarget)
 	local InstanceId = unit:GetInstanceId()
 	DespawnEncounterUnits(InstanceId)
 	unit:RemoveEvents()
+	if unit:GetEntry() == BossID then
+		RemoveCrystal(unit, InstanceId)
+	end
 end
 
-function BossHandler(unit,phase)
+function BOSS_START(unit,event)
+	unit:RegisterEvent("BOSS_Fixate", 1000, 0)
+end
+
+function BossHandler(unit,event)
+	local H = self[InstanceId].unit:GetHealthPct()
+	if H >= 91 then
+		return phase = 0
+	elseif H <= 90 and H >= 61 then
+		return phase = 1
+	elseif H <= 60 and H >= 31 then
+		return phase = 2
+	elseif H <= 30 then
+		return phase = 3
+	end
+end
+
+function BOSS_Fixate(unit,event)
+	for _,v in pairs(self[InstanceId].unit:GetPlayersInRange()) do
+		if v:HasAura(Crystal) and v:IsAlive() then
+			self[InstanceId].unit:CastSpellOnTarget(Fixate, v)
+		elseif self[InstanceId].unit.failure == 0 then --  prevents feedback loop from "BOSS_START"
+			self[InstanceId].unit.failure = 1
+			self[InstanceId].unit:RegisterEvent("BOSS_Fixate_Failure",10000,1)
+			self[InstanceId].unit.RegisterEvent("BOSS_Fixate_Failure_Reset", 10000,1)
+		end
+	end
+end
+
+function BOSS_Fixate_Failure_Reset(unit,event)
+	self[InstanceId].unit.failure = 0
+end
+
+function BOSS_Fixate_Failure(unit,event)
+	if self[InstanceId].unit.failure = 1 then
+		for _,v in pairs(self[instanceId].unit:GetPlayersInRange()) do
+			if v:HasAura(Crystal) and v:IsDead() then
+				RegisterEvent("BOSS_Summon_Sludge_Beast", 1, 1)
+			end
+		end
+	end
+end
+
+function BOSS_Summon_Sludge_Beast(unit,phase) -- unit is Boss
+	PerformIngameSpawn(1, BeastID, unit:GetMapId(), unit:GetX(), unit:GetY(), unit:GetZ(), unit:GetO(), unit:GetFaction(), 0, _, _, _, unit:GetInstanceId())
 end
