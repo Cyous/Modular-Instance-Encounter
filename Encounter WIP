@@ -132,17 +132,18 @@ function BOSS_START(unit,event)
 	unit:RegisterEvent("BOSS_Fixate", 1000, 0)
 end
 
-function BossHandler(unit,event)
+function BossHandler(unit,phase)
 	local H = self[InstanceId].unit:GetHealthPct()
 	if H >= 91 then
-		return phase = 0
+		phase = 0
 	elseif H <= 90 and H >= 61 then
-		return phase = 1
+		phase = 1
 	elseif H <= 60 and H >= 31 then
-		return phase = 2
+		phase = 2
 	elseif H <= 30 then
-		return phase = 3
+		phase = 3
 	end
+		return phase
 end
 
 function BOSS_Fixate(unit,event)
