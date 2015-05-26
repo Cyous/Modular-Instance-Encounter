@@ -30,7 +30,7 @@ local Crackle				= 0
 local Heavy_Steps			= 0
 local Wave_of_Blight		= 0 
 local Aura_of_Pestilence	= 0
-local Fixate
+local Fixate				= 0
 
 function RegisterEncounterUnits(unit,event)
 	local InstanceId = unit:GetInstanceId()
@@ -148,7 +148,7 @@ function BOSS_Fixate(unit,event)
 	for _,v in pairs(self[InstanceId].unit:GetPlayersInRange()) do
 		if v:HasAura(Crystal) and v:IsAlive() then
 			self[InstanceId].unit:CastSpellOnTarget(Fixate, v)
-		elseif self[InstanceId].unit.failure == 0 then --  prevents feedback loop from "BOSS_START"
+		elseif self[InstanceId].unit.failure == 0 then --  prevents creating feedback loop from "BOSS_START"
 			self[InstanceId].unit.failure = 1
 			self[InstanceId].unit:RegisterEvent("BOSS_Fixate_Failure",10000,1)
 			self[InstanceId].unit.RegisterEvent("BOSS_Fixate_Failure_Reset", 10000,1)
