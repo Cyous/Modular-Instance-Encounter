@@ -4,6 +4,7 @@ Sludge Monstrosity
 
 Author: Cyous
 Date: May 17, 2015
+Last Updated: May 25, 2015
 
 ]]
 
@@ -39,7 +40,7 @@ function RegisterEncounterUnits(unit,event)
 	end
 	for k,v in pairs self[InstanceId] do
 		if unit == nil then 
-			table.insert(self[InstanceID], unit)
+			table.insert(self[InstanceId], unit)
 		end
 	end
 end
