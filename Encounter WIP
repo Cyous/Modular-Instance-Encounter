@@ -166,7 +166,7 @@ function BOSS_Fixate_Failure(unit,event)
 	if self[InstanceId].unit.failure = 1 then
 		for _,v in pairs(self[instanceId].unit:GetPlayersInRange()) do
 			if v:HasAura(Crystal) and v:IsDead() then
-				RegisterEvent("BOSS_Summon_Sludge_Beast", 1, 1)
+				BOSS_Summon_Sludge_Beast(unit,_)
 			end
 		end
 	end
